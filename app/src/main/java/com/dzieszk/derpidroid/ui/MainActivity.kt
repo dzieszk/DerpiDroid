@@ -1,27 +1,38 @@
 package com.dzieszk.derpidroid.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.design.widget.NavigationView
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import com.dzieszk.derpidroid.R
+import com.dzieszk.derpidroid.server.Derpibooru
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
+import okhttp3.*
+import org.jsoup.Jsoup
+import java.io.IOException
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+
+    private var derpi: Derpibooru? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
+        derpi = Derpibooru(this)
+
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
+            getAbout()
         }
 
         val toggle = ActionBarDrawerToggle(
@@ -84,5 +95,52 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    fun getAbout(){
+        val request = Request.Builder()
+            .url(Derpibooru.ABOUT_URL)
+            .build()
+
+        derpi?.client?.newCall(request)?.enqueue(object: Callback{
+            override fun onResponse(call: Call, response: Response) {
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                Log.d("XD", "failure")
+            }
+        })
+    }
+
+    fun getMainPage(){
+//        val url = "https://derpibooru.org/search.json?utf8=%E2%9C%93&sbq=*&sf=created_at&sd=desc&min_score=&max_score=&perpage=16&page=1"
+//        val queryUrl = HttpUrl.parse("https://derpibooru.org/search.json?utf8=%E2%9C%93&sbq=*&sf=created_at&sd=desc&min_score=&max_score=&perpage=16&page=1")?.newBuilder()
+//        queryUrl?.addQueryParameter("utf8", "✓")
+//        queryUrl?.addQueryParameter("sbq", "*")
+//        queryUrl?.addQueryParameter("sf", "created_at")
+//        queryUrl?.addQueryParameter("sd", "dec")
+//        queryUrl?.addQueryParameter("min_score", "")
+//        queryUrl?.addQueryParameter("max_score", "")
+//        queryUrl?.addQueryParameter("perpage", "16")
+//        queryUrl?.addQueryParameter("page", "1")
+
+        val url = "https://derpibooru.org/search.json?q=ts"
+
+
+        val request = Request.Builder()
+                .url(url)
+                .build()
+
+        Log.d("XD", request.toString())
+
+            derpi?.client?.newCall(request)?.enqueue(object : Callback {
+                override fun onResponse(call: Call, response: Response) {
+                    Log.d("XD", response.toString())
+                }
+
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.d("XD", "failure")
+                }
+            })
     }
 }
