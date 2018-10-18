@@ -10,8 +10,10 @@ import android.util.Log
 import android.widget.Toast
 import com.dzieszk.derpidroid.R
 import com.dzieszk.derpidroid.models.UserStorage
-import com.dzieszk.derpidroid.server.Derpibooru
+import com.dzieszk.derpidroid.server.*
 import com.facebook.stetho.Stetho
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_login.*
 import okhttp3.*
 import org.jsoup.Jsoup
@@ -22,6 +24,8 @@ class LoginActivity : AppCompatActivity() {
 
     private var derpi: Derpibooru? = null
     private var userStorage: UserStorage? = null
+
+    private var restApi: DerpibooruService? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,9 +38,84 @@ class LoginActivity : AppCompatActivity() {
             val email = email.text.toString()
             val password = password.text.toString()
 
-            requestAuthenticityToken(email, password)
+            restApi = RestApi.create(AddCookiesInterceptor(this), ReceivedCookiesInterceptor(this))
+
+            getAuthenticityToken(email, password)
+
+
+            //requestAuthenticityToken(email, password)
+        }
+
+        testButton.setOnClickListener {
+            getAbout()
         }
     }
+
+    //worked
+    fun getAbout(){
+        restApi?.getAbout()
+            ?.subscribeOn(Schedulers.newThread())
+            ?.observeOn(AndroidSchedulers.mainThread())?.subscribe(
+                { result ->
+                    val doc = Jsoup.parse(result.string())
+                    val username = doc.getElementsByClass("header__link-user").first().attr("href").substringAfterLast("/")
+                    val avatarURL = doc.getElementsByAttribute("alt").first().attr("src").drop(2)
+                    Log.d("xdd", username + " " + avatarURL)
+                    userStorage?.setUser(username, avatarURL)
+
+                    val intent = Intent(applicationContext, MainActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(intent)
+                    finish()
+                },
+                { error ->
+                    error.printStackTrace()
+                }
+            )
+    }
+
+
+    fun getAuthenticityToken(email: String, password: String){
+        restApi?.getAuthenticityToken()
+            ?.subscribeOn(Schedulers.newThread())
+            ?.observeOn(AndroidSchedulers.mainThread())?.subscribe(
+                { result ->
+                    val metaHeaders = Jsoup.parse(result.string()).select("head").first().select("meta")
+                    for(header: Element in metaHeaders){
+                        if(header.attr("name").equals("csrf-token")){
+                            Log.d("xdd", header.attr("content"))
+                            signIn(email, password, header.attr("content"))
+                        }
+                    }
+                },
+                { error ->
+                    error.printStackTrace()
+                }
+            )
+    }
+
+    //reversed because login is http 302 error
+    fun signIn(email: String, password: String, token: String){
+        restApi?.signIn(
+            token = token,
+            email = email,
+            password = password
+        )?.subscribeOn(Schedulers.newThread())
+            ?.observeOn(AndroidSchedulers.mainThread())?.subscribe(
+                { result ->
+                    Toast.makeText(this, "Wrong username or password", Toast.LENGTH_SHORT).show()
+                },
+                { error -> //todo check if 302
+                    getAbout()
+                }
+            )
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+
+
+
 
     fun requestAuthenticityToken(email: String, password: String){
         val authencityTokenRequest: Request = Request.Builder()

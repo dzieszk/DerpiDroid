@@ -14,8 +14,6 @@ class LauncherActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val preferences = getSharedPreferences("Cookies", 0) //todo delete
-        preferences.edit().clear().apply()
 
         Stetho.initializeWithDefaults(this)
 

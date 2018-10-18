@@ -38,6 +38,12 @@ dependencies {
 
     //okhttp for requests
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+
+    //rxjava
+    implementation "io.reactivex.rxjava2:rxjava:$rxjavaVersion"
+    implementation "io.reactivex.rxjava2:rxandroid:$rxjavaAndroidVersion"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofitAdapterVersion"
 
     //gson for parsing
     implementation "com.google.code.gson:gson:$gson_version"

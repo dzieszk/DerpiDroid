@@ -32,4 +32,8 @@ ext{
     gson_version = "2.8.5"
     stetho_version = "1.5.0"
     stetho_okhttp_version = "1.5.0"
+    retrofit_version = "2.4.0"
+    rxjavaVersion = "2.2.2"
+    rxjavaAndroidVersion = "2.1.0"
+    retrofitAdapterVersion = "2.4.0"
 }

@@ -11,7 +11,9 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import com.dzieszk.derpidroid.R
-import com.dzieszk.derpidroid.server.Derpibooru
+import com.dzieszk.derpidroid.server.*
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import okhttp3.*
@@ -21,6 +23,7 @@ import java.io.IOException
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private var derpi: Derpibooru? = null
+    private var restApi: DerpibooruService? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,11 +31,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setSupportActionBar(toolbar)
 
         derpi = Derpibooru(this)
+        restApi = RestApi.create(AddCookiesInterceptor(this), ReceivedCookiesInterceptor(this))
 
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
-            getAbout()
+            searchQuery()
         }
 
         val toggle = ActionBarDrawerToggle(
@@ -95,6 +99,21 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    fun searchQuery(){
+        restApi?.searchQuery(query = "ts")
+            ?.subscribeOn(Schedulers.newThread())
+            ?.observeOn(AndroidSchedulers.mainThread())?.subscribe(
+                { result ->
+                    Log.d("xdd", result.string())
+
+                },
+                { error ->
+                    error.printStackTrace()
+
+                }
+            )
     }
 
     fun getAbout(){
