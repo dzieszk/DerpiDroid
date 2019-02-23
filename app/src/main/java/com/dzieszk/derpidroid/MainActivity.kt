@@ -6,12 +6,27 @@ import android.support.design.widget.NavigationView
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.TextView
+import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
+import kotlinx.android.synthetic.main.nav_header_main.*
+import org.jsoup.Jsoup
+import java.lang.Exception
+import kotlinx.coroutines.*
+import retrofit2.*
+import javax.security.auth.callback.Callback
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+
+    private var form:FormModel = FormModel()
+    private var disp: CompositeDisposable ?= null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +45,31 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         toggle.syncState()
 
         nav_view.setNavigationItemSelectedListener(this)
+
+        try{
+            GlobalScope.async {
+                var doc = Jsoup.connect("https://derpibooru.org/users/sign_in").get()
+                var title = doc.select("input[name=authenticity_token]").first()
+                println("DEBUG")
+                println(title.attributes().get("value"))
+                form.auth_token = title.attributes().get("value")
+                form.user_email = "email@em.ail"
+                form.user_password = "password"
+                println(form.makeString())
+
+            }
+        }
+        catch (e: Exception){
+            Log.d("xd", "dupa")
+        }
+
+        var sign: ApiService
+
+        var client = ApiUtils.apiService
+    }
+
+    private fun handleResponse(lol: String) {
+        println(lol)
     }
 
     override fun onBackPressed() {
